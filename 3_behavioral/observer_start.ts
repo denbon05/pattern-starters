@@ -4,13 +4,46 @@
 // TODO BONUS: When a user logged-in, display the user name in a navbar component (non exist yet)
 // TODO BONUS: When a user logged-in, display the user name in a navbar component (non exist yet)
 
+interface Subscriber<T> {
+  update(state: T): void;
+}
+
+class Store<T> {
+  private subscribers: Set<Subscriber<T>>;
+  private state: T;
+  private reducer: any;
+
+  constructor(reducer: any) {
+    this.subscribers = new Set();
+    this.reducer = reducer;
+  }
+
+  subscribe(subscriber: Subscriber<T>): Function {
+    this.subscribers.add(subscriber);
+    subscriber.update(this.state);
+    return () => this.subscribers.delete(subscriber);
+  }
+
+  dispatch(action: T) {
+    this.state = this.reducer(action, this.state);
+    this.subscribers.forEach((subscriber) => subscriber.update(this.state));
+  }
+}
+
+// Implementation
+
+interface User {
+  name: string;
+}
+
 /**
  * Responsible for auth logic
  */
-class Auth {
+class AppGlobalState extends Store<User> {
   private _currentUser: any;
 
   constructor() {
+    super();
     this._currentUser = null;
   }
 
@@ -19,18 +52,24 @@ class Auth {
   }
 
   signIn() {
-    this._currentUser = {name: "Nir"};
+    this._currentUser = { name: 'Nir' };
+    this.dispatch();
   }
 
   signOut() {
     this._currentUser = null;
+    this.dispatch();
   }
 }
 
 /**
  *  UI for displaying a message on the screen
  */
-class ToastMessage {
+class ToastMessage implements Subscriber<User> {
+  update(user: User): void {
+    this.showToast(`Hello ${user.name}`);
+  }
+
   showToast(message: string) {
     console.log('Display toast message: ' + message);
   }
@@ -54,3 +93,8 @@ class Router {
     console.log('Redirectong to' + routeName);
   }
 }
+
+// runtime
+
+const auth = new AppGlobalState();
+auth.signIn();

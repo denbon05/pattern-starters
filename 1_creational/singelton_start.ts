@@ -12,3 +12,17 @@ class Singleton {
     return Singleton.instance;
   }
 }
+
+namespace Singleton {
+  // full control
+  class User {
+    private constructor() {}
+
+    public static createUser(): User {
+      return new User();
+    }
+  }
+
+  // high control in instance
+  User.createUser();
+}
